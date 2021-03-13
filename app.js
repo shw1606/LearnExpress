@@ -14,19 +14,24 @@ app.use(morgan("dev"));
 app.use("/", express.static(path.join(__dirname, "public")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser(process.env.COOKIE_SECRET));
+app.use(cookieParser(process.env.COOKIE_SECRET)); // 쿠키를 알아서 파싱해서 req.cookies에 넣어준다.
+// 위의 경우 COOKIE_SECRET 의 값으로 비밀키를 넣어준 것. 서명된 쿠키가 있을 경우 이 비밀키를 통해 검증하고. req.signedCookies객체에 넣어준다.
 app.use(
+  // express-session. cookieParser 뒤에 작성하는 것이 안전하다.
   session({
-    resave: false,
-    saveUninitialized: false,
-    secret: process.env.COOKIE_SECRET,
+    // req.session 객체 안에 유지된다.
+    resave: false, // 변경사항이 없더라도 다시 저장할 건지 설정
+    saveUninitialized: false, // 세션에 저장할 내역이 없어도 처음부터 세션을 생성할지 설정
+    secret: process.env.COOKIE_SECRET, // 쿠키에 서명을 추가
     cookie: {
-      httpOnly: true,
-      secure: false,
+      // 세션 쿠키에 대한 설정
+      httpOnly: true, // 클라이언트에서 쿠키 확인 불가
+      secure: false, // https 가 아니라도 가능
     },
     name: "session-cookie",
   })
-);
+); // 이러한 미들웨어들은 내부적으로 next()를 실행하기 때문에 굳이 안넣어줘도 된다.
+// static 제공 미들웨어는 res.send[File] 로 응답을 보내고 next()하지 않기 때문에 뒤에 있는 미들웨어를 실행하지 않는다.
 
 app.use((req, res, next) => {
   console.log("모든 요청에 다 실행됩니다.");
