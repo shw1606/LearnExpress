@@ -6,6 +6,8 @@ const dotenv = require("dotenv");
 const path = require("path");
 
 dotenv.config(); // 이렇게 하면 .env 파일을 읽어서 process.env로 만들어준다.
+const indexRouter = require("./routes");
+const userRouter = require("./routes/user");
 
 const app = express();
 app.set("port", process.env.PORT || 3000);
@@ -34,44 +36,50 @@ app.use(
 ); // 이러한 미들웨어들은 내부적으로 next()를 실행하기 때문에 굳이 안넣어줘도 된다.
 // static 제공 미들웨어는 res.send, res.sendFile 로 응답을 보내고 next()하지 않기 때문에 뒤에 있는 미들웨어를 실행하지 않는다.
 
-const multer = require("multer");
-const fs = require("fs");
-
-try {
-  fs.readdirSync("uploads");
-} catch (err) {
-  console.error("upload 폴더 없으므로 생성");
-  fs.mkdirSync("uploads");
-}
-
-const upload = multer({
-  storage: multer.diskStorage({
-    destination(req, file, done) {
-      done(null, "uploads/");
-    },
-    filename(req, file, done) {
-      const ext = path.extname(file.originalname);
-      done(null, path.basename(file.originalname, ext) + Date.now() + ext);
-    },
-  }),
-  limits: { fileSize: 5 * 1024 * 1024 },
-});
-app.get("/upload", (req, res) => {
-  res.sendFile(path.join(__dirname, "multipart.html"));
-});
-app.post(
-  "/upload",
-  upload.fields([{ name: "image1" }, { name: "image2" }]),
-  (req, res) => {
-    console.log(res.files, req.body);
-    res.send("OK");
-  }
-);
+app.use("/", indexRouter);
+app.use("/user", userRouter);
 
 app.use((req, res, next) => {
-  console.log("모든 요청에 다 실행됩니다.");
-  next();
+  res.status(404).send("Not Found");
 });
+// const multer = require("multer");
+// const fs = require("fs");
+
+// try {
+//   fs.readdirSync("uploads");
+// } catch (err) {
+//   console.error("upload 폴더 없으므로 생성");
+//   fs.mkdirSync("uploads");
+// }
+
+// const upload = multer({
+//   storage: multer.diskStorage({
+//     destination(req, file, done) {
+//       done(null, "uploads/");
+//     },
+//     filename(req, file, done) {
+//       const ext = path.extname(file.originalname);
+//       done(null, path.basename(file.originalname, ext) + Date.now() + ext);
+//     },
+//   }),
+//   limits: { fileSize: 5 * 1024 * 1024 },
+// });
+// app.get("/upload", (req, res) => {
+//   res.sendFile(path.join(__dirname, "multipart.html"));
+// });
+// app.post(
+//   "/upload",
+//   upload.fields([{ name: "image1" }, { name: "image2" }]),
+//   (req, res) => {
+//     console.log(res.files, req.body);
+//     res.send("OK");
+//   }
+// );
+
+// app.use((req, res, next) => {
+//   console.log("모든 요청에 다 실행됩니다.");
+//   next();
+// });
 
 app.get(
   "/",
